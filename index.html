@@ -1,0 +1,974 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<style>*,*::before,*::after{box-sizing:border-box}body{margin:0}</style>
+<title>Shankheshwar Colony Layout</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+Devanagari:wght@500;600&display=swap">
+<style>
+/* Layout: one-screen map tool — header strip, map canvas left, plan sheet panel right (stacks on phones) */
+:root{
+  --paper:#f4f5f1; --sheet:#ffffff; --ink:#1c2624; --muted:#5d6966; --line:#d5d9d2;
+  --land:#e9ecdf; --land-hatch:#d6dbc6;
+  --road:#d8d6cf; --road-text:#6f6a5e;
+  --plot:#f4dd8f; --plot-edge:#9a7a22; --plot-text:#3d3007;
+  --park:#a6cf8f; --park-edge:#4f8a3a; --amen:#b9c9ec; --amen-edge:#3e5d9c;
+  --bound:#3b2f2a;
+  --accent:#1f4fa3; --accent-soft:#7fa6ea; --hit:#e8572a;
+  --wall:#fbf7ee; --roof:#d9d2c3; --tree:#2f6e35; --sky:#cfe1ec;
+  --g-land:#b7c596; --g-road:#80838a; --g-plot:#e6d39a; --g-park:#76b05a; --g-bwall:#efe9dc;
+  --g-walls:#f3dfb8,#e8c39e,#d5e3ea,#f0cbbd,#dfe7c8,#f7eedd,#d9cde3,#f2d58f;
+  --temple:#e8731a; --temple-stone:#f3e3c3; --route:#2563eb; --tank:#2f7fc1;
+  --f-display:"Barlow Condensed","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --paper:#121615; --sheet:#1a201e; --ink:#e4e9e5; --muted:#9aa6a2; --line:#2e3734;
+  --land:#18201b; --land-hatch:#222c25;
+  --road:#2c302e; --road-text:#a19a88;
+  --plot:#5e4f1d; --plot-edge:#c9a64a; --plot-text:#f6e7b5;
+  --park:#2d5230; --park-edge:#78b562; --amen:#26375c; --amen-edge:#86a6e6;
+  --bound:#d9cfc6;
+  --accent:#8db4ff; --accent-soft:#33589b; --hit:#ff8a5c;
+  --wall:#b9b2a3; --roof:#6e685d; --tree:#2e6a33; --sky:#141a18;
+  --g-land:#26301f; --g-road:#3a3d42; --g-plot:#5a4f2c; --g-park:#2f5a2a; --g-bwall:#6d675b;
+  --g-walls:#a89a80,#9c8670,#8a9aa3,#a38478,#8f9a7b,#aaa292,#958aa0,#a8925a;
+  --temple:#ff9a4a; --temple-stone:#8a7a5f; --route:#6ea0ff; --tank:#6fb3ef; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --paper:#121615; --sheet:#1a201e; --ink:#e4e9e5; --muted:#9aa6a2; --line:#2e3734;
+  --land:#18201b; --land-hatch:#222c25;
+  --road:#2c302e; --road-text:#a19a88;
+  --plot:#5e4f1d; --plot-edge:#c9a64a; --plot-text:#f6e7b5;
+  --park:#2d5230; --park-edge:#78b562; --amen:#26375c; --amen-edge:#86a6e6;
+  --bound:#d9cfc6;
+  --accent:#8db4ff; --accent-soft:#33589b; --hit:#ff8a5c;
+  --wall:#b9b2a3; --roof:#6e685d; --tree:#2e6a33; --sky:#141a18;
+  --g-land:#26301f; --g-road:#3a3d42; --g-plot:#5a4f2c; --g-park:#2f5a2a; --g-bwall:#6d675b;
+  --g-walls:#a89a80,#9c8670,#8a9aa3,#a38478,#8f9a7b,#aaa292,#958aa0,#a8925a;
+  --temple:#ff9a4a; --temple-stone:#8a7a5f; --route:#6ea0ff; --tank:#6fb3ef; color-scheme:dark}
+
+html,body{height:100%}
+[hidden]{display:none!important}
+/* Mobile first: header, full-bleed map, bottom sheet. Desktop (>=900px) turns the sheet into a side panel. */
+body{background:var(--paper);color:var(--ink);font-family:var(--f-body);font-size:14px;display:flex;flex-direction:column;overflow:hidden;--peek:calc(150px + env(safe-area-inset-bottom,0px))}
+.top{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:center;gap:8px 10px;padding:10px 16px;border-bottom:1px solid var(--line);background:var(--sheet)}
+.top h1{font-family:var(--f-display);font-weight:700;font-size:20px;letter-spacing:.02em;margin:0;line-height:1.1;text-wrap:balance}
+.sub{color:var(--muted);font-size:12px}
+.title{display:flex;flex-direction:column;gap:2px;min-width:0}
+.long{display:none}
+.search{grid-column:1/-1;display:flex;gap:8px;align-items:center}
+.search input{flex:1;min-width:0;font:500 16px var(--f-mono);height:44px;padding:0 12px;border:1px solid var(--line);border-radius:8px;background:var(--paper);color:var(--ink)}
+.search input:focus-visible,button:focus-visible,input[type=range]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+button{font:500 14px var(--f-body);padding:0 14px;height:44px;border-radius:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--sheet);font-weight:600}
+.theme{display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.theme button{border:none;border-radius:0;height:38px;min-width:40px;padding:0 10px;background:var(--sheet)}
+.theme button+button{border-left:1px solid var(--line)}
+.theme button[aria-pressed="true"]{background:var(--accent);color:var(--sheet)}
+.lbl{display:none}
+.msg{grid-column:1/-1;font-size:13px;color:var(--hit);min-width:0}
+.msg:empty{display:none}
+
+.main{flex:1;position:relative;min-height:0}
+.mapwrap{position:absolute;inset:0 0 var(--peek) 0;background:var(--land)}
+#map{width:100%;height:100%;display:block;touch-action:none;cursor:grab;user-select:none;-webkit-user-select:none}
+#map.dragging{cursor:grabbing}
+.zoom{position:absolute;right:12px;top:12px;display:flex;flex-direction:column;gap:6px}
+.zoom button{width:44px;height:44px;padding:0;font-size:20px;background:var(--sheet);box-shadow:0 1px 3px rgb(0 0 0 / .12)}
+.scale{position:absolute;left:12px;bottom:12px;font:500 11px var(--f-mono);color:var(--muted);background:var(--sheet);padding:4px 8px;border-radius:4px;border:1px solid var(--line)}
+.scale .desk{display:none}
+.view{position:absolute;left:12px;top:12px;display:flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgb(0 0 0 / .12);z-index:1}
+.view button{border:none;border-radius:0;height:44px;min-width:52px;background:var(--sheet);font:700 15px var(--f-display);letter-spacing:.06em}
+.view button+button{border-left:1px solid var(--line)}
+.view button[aria-pressed="true"]{background:var(--accent);color:var(--sheet)}
+#three{position:absolute;inset:0;touch-action:none}
+#three canvas{display:block;width:100%;height:100%}
+.tag{position:absolute;transform:translate(-50%,-100%);pointer-events:none;background:var(--accent);color:var(--sheet);font:700 15px var(--f-display);padding:3px 9px;border-radius:6px;white-space:nowrap;z-index:1}
+.ltag{position:absolute;transform:translate(-50%,-100%);pointer-events:none;background:var(--temple);color:#fff;font:700 13px var(--f-display);padding:2px 8px;border-radius:5px;white-space:nowrap;letter-spacing:.03em}
+.ltag.entry3d{background:var(--route)}
+.route{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px;font-size:13px}
+.route b{font-family:var(--f-mono);font-weight:500}
+.route button{height:36px;font-size:13px}
+.lmrow{display:flex;flex-wrap:wrap;gap:8px}
+.lmrow button{height:40px;border-color:var(--temple);color:var(--ink)}
+.lmrow button i{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--temple);margin-right:6px}
+.hi{font-family:"Noto Sans Devanagari",var(--f-body);color:var(--muted);font-size:13px}
+.tag::after{content:"";position:absolute;left:50%;bottom:-5px;margin-left:-5px;border:5px solid transparent;border-bottom:0;border-top-color:var(--accent)}
+
+aside{position:absolute;left:0;right:0;bottom:0;height:var(--peek);background:var(--sheet);border-top:1px solid var(--line);border-radius:16px 16px 0 0;box-shadow:0 -6px 24px rgb(0 0 0 / .14);display:flex;flex-direction:column;min-width:0;z-index:2;overflow:hidden}
+aside.open{height:82%}
+.grab{flex:none;width:100%;height:22px;border:none;border-radius:0;background:transparent;display:flex;justify-content:center;align-items:center;touch-action:none}
+.grab span{width:40px;height:5px;border-radius:3px;background:var(--line)}
+.peek{flex:none;padding:0 16px calc(12px + env(safe-area-inset-bottom,0px));touch-action:none}
+.sheet-body{flex:1;overflow:auto;padding:4px 16px 24px;display:flex;flex-direction:column;gap:22px;min-height:0;border-top:1px solid var(--line);padding-top:16px}
+aside h2{font-family:var(--f-display);font-weight:600;font-size:13px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
+.h-sel{display:none}
+.pd{display:flex;align-items:center;gap:16px;min-height:66px}
+.pno{font-family:var(--f-display);font-size:40px;font-weight:700;line-height:1;flex:none}
+.pno small{display:block;font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.14em;text-transform:uppercase;margin-top:2px}
+dl{display:grid;grid-template-columns:auto 1fr;gap:3px 12px;margin:0;min-width:0}
+dt{color:var(--muted);font-size:12px}
+dd{margin:0;font-family:var(--f-mono);font-size:13px;font-variant-numeric:tabular-nums}
+.empty{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:66px}
+.hint{color:var(--muted);font-size:13px;line-height:1.5;margin:0}
+.more{flex:none;height:36px;font-size:13px}
+table{width:100%;border-collapse:collapse;font-size:13px}
+td{padding:7px 0;border-bottom:1px solid var(--line)}
+td.n{font-family:var(--f-mono);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap;padding-left:8px}
+tr:last-child td{border-bottom:none}
+.legend{display:grid;grid-template-columns:1fr 1fr;gap:10px 12px;font-size:13px}
+.sw{display:inline-block;width:14px;height:14px;border-radius:3px;vertical-align:-2px;margin-right:6px;border:1px solid}
+.toggle{display:flex;align-items:center;gap:10px;font-size:14px}
+.toggle input[type=range]{flex:1;height:32px}
+.meta{font-size:13px;color:var(--muted);line-height:1.55;margin:0}
+
+@media (min-width:900px){
+  .top{display:flex;flex-wrap:wrap;gap:10px 20px}
+  .title{flex:1 1 280px}
+  .top h1{font-size:22px}
+  .long{display:inline}.short{display:none}
+  .search{grid-column:auto}
+  .search input{flex:none;width:170px;height:38px;font-size:14px}
+  button{height:38px;font-size:13px}
+  .lbl{display:inline}
+  .msg{grid-column:auto}
+  .main{display:grid;grid-template-columns:minmax(0,1fr) 340px}
+  .mapwrap{position:relative;inset:auto;min-width:0}
+  .zoom button{width:38px;height:38px;font-size:18px}
+  .view button{height:38px}
+  .scale .desk{display:inline}.scale .mob{display:none}
+  aside{position:static;height:auto;border-radius:0;border-top:none;border-left:1px solid var(--line);box-shadow:none;overflow:auto}
+  .grab,.more{display:none}
+  .h-sel{display:block}
+  .peek{padding:16px 16px 0}
+  .pd,.empty{border:1px solid var(--line);border-radius:8px;padding:14px;background:var(--paper)}
+  .sheet-body{overflow:visible;border-top:none}
+}
+@media (prefers-reduced-motion:no-preference){.plot rect{transition:fill .12s}aside{transition:height .25s ease}}
+
+/* SVG */
+.plot rect{fill:var(--plot);stroke:var(--plot-edge);stroke-width:.6;vector-effect:non-scaling-stroke}
+.plot text{font:600 7px var(--f-display);fill:var(--plot-text);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.plot:hover rect{fill:var(--accent-soft)}
+#map .plot.sel rect{fill:var(--accent);stroke:var(--accent);transition:none}
+#map .plot.sel text{fill:var(--sheet)}
+.plot{cursor:pointer}
+.park{fill:var(--park);stroke:var(--park-edge);stroke-width:1;vector-effect:non-scaling-stroke}
+.amen{fill:var(--amen);stroke:var(--amen-edge);stroke-width:1;vector-effect:non-scaling-stroke}
+.road{fill:var(--road)}
+.bound{fill:none;stroke:var(--bound);stroke-width:2;vector-effect:non-scaling-stroke;stroke-linejoin:round}
+.lbl-road{font:600 6.5px var(--f-display);fill:var(--road-text);letter-spacing:.08em;text-anchor:middle;dominant-baseline:central}
+.lbl-area{font:600 13px var(--f-display);fill:var(--park-edge);letter-spacing:.14em;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.lbl-land{font:600 12px var(--f-display);fill:var(--muted);letter-spacing:.2em;text-anchor:middle;opacity:.8}
+.rt-case{fill:none;stroke:var(--sheet);stroke-width:10px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round}
+.rt-line{fill:none;stroke:var(--route);stroke-width:5px;vector-effect:non-scaling-stroke;stroke-linecap:round;stroke-linejoin:round;stroke-dasharray:12 7}
+@media (prefers-reduced-motion:no-preference){.rt-line{animation:rtdash .9s linear infinite}}
+@keyframes rtdash{to{stroke-dashoffset:-19}}
+.rt-end{fill:none;stroke:var(--route);stroke-width:3px;vector-effect:non-scaling-stroke}
+.entry circle{fill:var(--route);stroke:var(--sheet);stroke-width:2px;vector-effect:non-scaling-stroke}
+.entry text{font:700 9px var(--f-display);fill:var(--route);letter-spacing:.1em}
+.temple .stone{fill:var(--temple-stone);stroke:var(--temple);stroke-width:.8;vector-effect:non-scaling-stroke}
+.temple .saf{fill:var(--temple)}
+.temple .pole{stroke:var(--ink);stroke-width:.8}
+.lbl-temple{font:700 6.5px var(--f-display);fill:var(--temple);letter-spacing:.06em;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.lbl-hi{font:600 6px "Noto Sans Devanagari",var(--f-body);fill:var(--ink);text-anchor:middle;dominant-baseline:central;pointer-events:none}
+.lm{cursor:pointer}
+#imgDlg{border:none;border-radius:14px;padding:0;width:min(960px,calc(100vw - 24px));max-height:calc(100% - 24px);background:var(--sheet);color:var(--ink);box-shadow:0 20px 60px rgb(0 0 0 / .35)}
+#imgDlg::backdrop{background:rgb(0 0 0 / .5)}
+#imgDlg .dh{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 16px;border-bottom:1px solid var(--line)}
+#imgDlg h3{margin:0;font:700 20px var(--f-display)}
+#imgDlg p{margin:0;padding:12px 16px 0;color:var(--muted);font-size:13px;line-height:1.5}
+#imgDlg .im{padding:12px 16px 16px;overflow:auto}
+#imgDlg img{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:6px;-webkit-touch-callout:default;user-select:auto}
+.tank .tk{fill:var(--tank)}
+.tank .leg{stroke:var(--tank);stroke-width:1.2}
+.lbl-tank{font:700 5px var(--f-display);fill:var(--tank);text-anchor:middle;letter-spacing:.06em;pointer-events:none}
+.lmrow button.tankb{border-color:var(--tank)}
+.lmrow button.tankb i{background:var(--tank);border-radius:2px}
+.proposed{fill:none;stroke:var(--muted);stroke-width:1;stroke-dasharray:6 4;vector-effect:non-scaling-stroke}
+
+</style>
+
+<header class="top">
+  <div class="title">
+    <h1>Shankheshwar Colony — Layout Plan</h1>
+    <span class="sub"><span class="short">Kanadia, Indore · 413 plots</span><span class="long">Village Kanadia, Teh. &amp; Distt. Indore · Kh. No. 107/1/2, 109, 114/1/2, 116/1, 116/2 · 413 plots</span></span>
+  </div>
+  <div class="theme" role="group" aria-label="Colour mode">
+    <button type="button" data-mode="light" id="tLight" aria-label="Bright mode">☀<span class="lbl"> Bright</span></button>
+    <button type="button" data-mode="dark" id="tDark" aria-label="Dark mode">☾<span class="lbl"> Dark</span></button>
+    <button type="button" data-mode="auto" id="tAuto" aria-label="Match device">A<span class="lbl">uto</span></button>
+  </div>
+  <form class="search" id="searchForm">
+    <label for="q" class="sub lbl">Plot no.</label>
+    <input id="q" inputmode="numeric" autocomplete="off" placeholder="Plot no., e.g. 247" aria-label="Plot number">
+    <button class="primary" type="submit">Find</button>
+  </form>
+  <span class="msg" id="msg" aria-live="polite"></span>
+</header>
+
+<dialog id="imgDlg" aria-labelledby="imgDlgT">
+  <div class="dh"><h3 id="imgDlgT">Map ready to save</h3><button type="button" id="imgClose">Close</button></div>
+  <p id="imgHint">Long-press the image and choose <b>Download image</b> or <b>Save to Photos</b>. On a computer, right-click it and choose <b>Save image as</b>.</p>
+  <div class="im"><img id="imgOut" alt="Exported map"></div>
+</dialog>
+
+<div class="main">
+  <div class="mapwrap">
+    <svg id="map" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="2D layout plan of the colony showing 413 plots, roads and parks">
+      <defs>
+        <pattern id="hatch" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <rect width="10" height="10" fill="var(--land)"/>
+          <line x1="0" y1="0" x2="0" y2="10" stroke="var(--land-hatch)" stroke-width="1.5"/>
+        </pattern>
+      </defs>
+      <rect x="-2000" y="-2000" width="6000" height="5000" fill="url(#hatch)"/>
+      <g id="layers"></g>
+      <image id="scan" href="scan.jpg" x="0" y="0" width="2000" height="1029" opacity="0" pointer-events="none" style="mix-blend-mode:multiply"/>
+    </svg>
+    <div id="three" hidden></div>
+    <div class="tag" id="tag" hidden></div>
+    <div class="view" role="group" aria-label="View">
+      <button type="button" data-view="2d" aria-pressed="true">2D</button>
+      <button type="button" data-view="3d" aria-pressed="false">3D</button>
+    </div>
+    <div class="zoom">
+      <button type="button" id="zin" aria-label="Zoom in">+</button>
+      <button type="button" id="zout" aria-label="Zoom out">−</button>
+      <button type="button" id="zfit" aria-label="Fit whole plan" style="font-size:12px">Fit</button>
+      <button type="button" id="pdfBtn" aria-label="Export map as PDF" style="font-size:12px;font-weight:600">PDF</button>
+    </div>
+    <div class="scale" id="hint2d"><span class="mob">Pinch to zoom · tap a plot</span><span class="desk">Drag to pan · scroll or pinch to zoom</span></div>
+    <div class="scale" id="hint3d" hidden><span class="mob">Drag to rotate · two fingers to pan</span><span class="desk">Drag to rotate · right-drag to pan · scroll to zoom</span></div>
+  </div>
+
+  <aside id="sheet">
+    <button type="button" class="grab" id="grab" aria-expanded="false" aria-controls="sheetBody" aria-label="Show legend and area statement"><span></span></button>
+    <div class="peek" id="peek">
+      <h2 class="h-sel">Selected plot</h2>
+      <div id="detail"></div>
+    </div>
+    <div class="sheet-body" id="sheetBody">
+
+    <section>
+      <h2>Landmarks</h2>
+      <div class="lmrow">
+        <button type="button" data-lm="0"><i></i>Sankeshwar Shiv Mandir</button>
+        <button type="button" data-lm="1"><i></i>Hanuman Mandir</button>
+        <button type="button" data-lm="2" class="tankb"><i></i>Water tank</button>
+      </div>
+      <p class="hint" style="margin-top:8px">Routes start at the main entry gate on the Kankad Road side (west).</p>
+    </section>
+
+    <section>
+      <h2>Legend</h2>
+      <div class="legend">
+        <span><i class="sw" style="background:var(--plot);border-color:var(--plot-edge)"></i>Residential plot</span>
+        <span><i class="sw" style="background:var(--park);border-color:var(--park-edge)"></i>Park</span>
+        <span><i class="sw" style="background:var(--road);border-color:var(--road)"></i>Road</span>
+        <span><i class="sw" style="background:var(--amen);border-color:var(--amen-edge)"></i>Amenities (club)</span>
+        <span><i class="sw" style="background:var(--land-hatch);border-color:var(--land-hatch)"></i>Agriculture land</span>
+        <span><i class="sw" style="background:transparent;border-color:var(--bound);border-width:2px"></i>Site boundary</span>
+        <span><i class="sw" style="background:var(--temple);border-color:var(--temple)"></i>Temple</span>
+        <span><i class="sw" style="background:var(--tank);border-color:var(--tank)"></i>Water tank (OHT)</span>
+        <span><i class="sw" style="background:var(--route);border-color:var(--route);height:5px;vertical-align:3px"></i>Route from entry</span>
+      </div>
+    </section>
+
+    <section>
+      <h2>Compare with original</h2>
+      <div class="toggle">
+        <label for="scanOp">Scan overlay</label>
+        <input type="range" id="scanOp" min="0" max="100" value="0">
+      </div>
+      <p class="hint" style="margin-top:6px">Slide to fade in the scanned drawing on top of the redrawn plan.</p>
+    </section>
+
+    <section>
+      <h2>Area statement</h2>
+      <table>
+        <tr><td>Total land area</td><td class="n">7.571 ha</td><td class="n">100.00%</td></tr>
+        <tr><td>Proposed plot area</td><td class="n">4.689 ha</td><td class="n">61.93%</td></tr>
+        <tr><td>Amenities (club)</td><td class="n">0.0391 ha</td><td class="n">0.51%</td></tr>
+        <tr><td>Park area</td><td class="n">0.757 ha</td><td class="n">10.00%</td></tr>
+        <tr><td>S.T., O.H.T. &amp; T.F.</td><td class="n">0.030 ha</td><td class="n">0.39%</td></tr>
+        <tr><td>Road area</td><td class="n">2.140 ha</td><td class="n">27.17%</td></tr>
+      </table>
+    </section>
+
+    <section>
+      <h2>Plots by size</h2>
+      <table id="sizeTable"></table>
+    </section>
+
+    <section>
+      <h2>Drawing</h2>
+      <p class="meta">Revised layout plan of residential colony for Shri Rishabh Grah Nirman Sahakari Society, Indore. Approved by Town &amp; Country Planning, Indore (2006–07). Dimensions in metres.</p>
+      <p class="meta" style="margin-top:8px">This view is redrawn from the scan. Block positions follow the drawing; plot sizes are the figures written on it. Strip plots along the edges taper, so their depths here are interpolated between the marked values.</p>
+      <p class="meta note3d" style="margin-top:8px">In 3D, the houses are illustrative (ground to G+2 with typical setbacks). The plan only fixes plot boundaries, not buildings.</p>
+    </section>
+    </div>
+  </aside>
+</div>
+
+<script>
+const NS='http://www.w3.org/2000/svg';
+const rng=(a,b)=>{const r=[];if(a<=b)for(let i=a;i<=b;i++)r.push(i);else for(let i=a;i>=b;i--)r.push(i);return r};
+
+/* Coordinates are in the scan's own units (2000 × 1029 page). Each block: rect + columns of plot numbers listed top→bottom.
+   d = [frontage, depth] in metres; t = [depth at top, depth at bottom] for tapering strips. */
+const S=[7.0,15.24], N=[7.0,13.71], M=[7.62,18.29];
+const blocks=[
+ // ---- West sector ----
+ {sec:'West',x:115,y:155,w:75,h:170,cols:[{n:rng(20,11),d:S},{n:rng(21,30),d:S}]},
+ {sec:'West',x:205,y:170,w:67,h:113,cols:[{n:rng(55,49),d:S},{n:rng(56,62),d:N}]},
+ {sec:'West',x:288,y:160,w:77,h:120,cols:[{n:rng(87,81),d:N},{n:rng(88,94),d:S}]},
+ {sec:'West',x:383,y:145,w:47,h:143,cols:[{n:rng(105,113),w:7.0,t:[22.26,16.77]}]},
+ {sec:'West',x:397,y:345,w:35,h:195,cols:[{n:rng(114,124),w:7.0,t:[13.57,8.16]}]},
+ {sec:'West',x:135,y:355,w:67,h:182,cols:[{n:rng(10,1),d:S},{n:rng(31,40),d:S}]},
+ {sec:'West',x:225,y:378,w:68,h:144,cols:[{n:rng(48,41),d:S},{n:rng(63,70),d:N}]},
+ {sec:'West',x:308,y:370,w:69,h:173,cols:[{n:rng(80,71),d:N},{n:rng(95,104),d:S}]},
+ // ---- Central sector ----
+ {sec:'Central',x:382,y:640,w:48,h:23,cols:[{n:[125],d:null},{n:[126],d:null}]},
+ {sec:'Central',x:382,y:663,w:48,h:94,cols:[{n:rng(127,131),w:7.62,t:[21.29,17.91]}]},
+ {sec:'Central',x:450,y:563,w:88,h:185,cols:[{n:rng(141,132),d:M},{n:rng(142,151),d:M}]},
+ {sec:'Central',x:553,y:567,w:45,h:196,cols:[{n:rng(162,152),w:7.62,t:[18.49,18.75]}]},
+ // ---- East sector ----
+ {sec:'East',x:710,y:168,w:32,h:384,cols:[{n:rng(184,163),w:7.0,t:[14.94,19.38]}]},
+ {sec:'East',x:772,y:177,w:65,h:156,cols:[{n:rng(185,193),d:S},{n:rng(220,212),d:S}]},
+ {sec:'East',x:763,y:418,w:75,h:145,cols:[{n:rng(194,202),d:S},{n:rng(211,203),d:S}]},
+ {sec:'East',x:862,y:178,w:73,h:157,cols:[{n:rng(221,229),d:S},{n:rng(256,248),d:S}]},
+ {sec:'East',x:847,y:415,w:83,h:162,cols:[{n:rng(230,238),d:S},{n:rng(247,239),d:S}]},
+ {sec:'East',x:950,y:163,w:73,h:234,cols:[{n:rng(257,270),d:S},{n:rng(304,291),d:S}]},
+ {sec:'East',x:945,y:420,w:62,h:177,cols:[{n:rng(271,280),d:S},{n:rng(290,281),d:S}]},
+ {sec:'East',x:1038,y:187,w:74,h:150,cols:[{n:rng(305,313),d:S},{n:rng(340,332),d:S}]},
+ {sec:'East',x:1033,y:417,w:74,h:166,cols:[{n:rng(314,322),d:S},{n:rng(331,323),d:S}]},
+ {sec:'East',x:1127,y:172,w:73,h:165,cols:[{n:rng(341,350),d:S},{n:rng(376,367),d:S}]},
+ {sec:'East',x:1122,y:418,w:75,h:102,cols:[{n:rng(351,356),d:S},{n:rng(366,361),d:S}]},
+ {sec:'East',x:1122,y:520,w:46,h:76,cols:[{n:rng(357,360),w:7.0,t:[20.04,18.95]}]},
+ {sec:'East',x:1215,y:303,w:73,h:95,cols:[{n:rng(377,382),d:S},{n:rng(400,395),d:S}]},
+ {sec:'East',x:1300,y:303,w:43,h:95,cols:[{n:rng(401,406),d:S}]},
+ {sec:'East',x:1213,y:420,w:74,h:100,cols:[{n:rng(383,388),d:S},{n:rng(394,389),d:S}]},
+ {sec:'East',x:1298,y:420,w:37,h:140,cols:[{n:rng(407,413),d:S}]},
+];
+const sites=[ // colony boundaries — everything inside not taken by a plot/park is road
+ [[108,148],[432,138],[434,548],[150,545],[128,330]],
+ [[376,543],[602,543],[604,772],[380,762]],
+ [[708,163],[1348,166],[1346,562],[1295,562],[1172,520],[1168,602],[990,602],[890,596],[800,584],[705,574]],
+];
+// vacant land along the south edge of the east sector (no road there yet)
+const vacant=[[705,566],[1170,566],[1168,602],[990,602],[890,596],[800,584],[705,574]];
+const connector=[[598,545],[710,533],[710,557],[598,569]];
+const parks=[[220,296,150,61],[377,562,58,60],[762,337,168,60],[1035,353,165,44],[1218,172,125,118]];
+const amen=[383,288,47,55];
+const roadLabels=[
+ [255,160,'7.50 M WIDE ROAD',0],[197,240,'7.50 M WIDE ROAD',-90],[280,225,'7.50 M WIDE ROAD',-90],[374,225,'9.0 M WIDE ROAD',-90],
+ [300,290,'7.50 M WIDE ROAD',0],[300,364,'7.50 M WIDE ROAD',0],[213,455,'7.50 M WIDE ROAD',-90],[300,455,'7.50 M WIDE ROAD',-90],
+ [387,455,'9.0 M WIDE ROAD',-90],[495,553,'9.0 M WIDE ROAD',0],[440,690,'7.50 M WIDE ROAD',-90],[545,670,'7.50 M WIDE ROAD',-90],
+ [654,551,'9.0 M WIDE ROAD',-6],[752,490,'9.0 M WIDE ROAD',-90],[985,408,'7.5 M WIDE ROAD',0],[938,500,'7.5 M WIDE ROAD',-90],
+ [1020,500,'7.5 M WIDE ROAD',-90],[1119,260,'7.5 M WIDE ROAD',-90],[1208,240,'7.5 M WIDE ROAD',-90],[1030,260,'7.5 M',-90],[1114,470,'7.5 M',-90],
+];
+const landLabels=[[290,120,'AGRICULTURE LAND'],[1060,135,'AGRICULTURE LAND'],[575,330,'AGRICULTURE LAND'],[255,625,'AGRICULTURE LAND'],[820,640,'AGRICULTURE LAND'],[1265,600,'AGRICULTURE LAND']];
+
+// ---- build plot list ----
+const plots=new Map();
+for(const b of blocks){
+  const cw=b.w/b.cols.length;
+  b.cols.forEach((c,ci)=>{
+    const rh=b.h/c.n.length;
+    c.n.forEach((num,ri)=>{
+      let W=null,D=null,approx=false;
+      if(c.d){[W,D]=c.d}
+      else if(c.t){W=c.w;const f=c.n.length>1?ri/(c.n.length-1):0;D=+(c.t[0]+(c.t[1]-c.t[0])*f).toFixed(2);approx=true}
+      plots.set(num,{n:num,sec:b.sec,x:b.x+ci*cw,y:b.y+ri*rh,w:cw,h:rh,W,D,approx});
+    });
+  });
+}
+
+// ---- draw ----
+const svg=document.getElementById('map'),layers=document.getElementById('layers');
+const el=(t,a,p=layers)=>{const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);p.appendChild(e);return e};
+const pts=a=>a.map(p=>p.join(',')).join(' ');
+// proposed 36.10 m road on the west edge
+el('polygon',{points:pts([[66,140],[98,140],[122,560],[90,560]]),class:'proposed'});
+const pr=el('text',{x:88,y:350,class:'lbl-land',transform:'rotate(-86 88 350)',style:'font-size:9px'});pr.textContent='36.10 M WIDE PROPOSED ROAD ON KANKAD';
+for(const l of landLabels){const t=el('text',{x:l[0],y:l[1],class:'lbl-land'});t.textContent=l[2]}
+for(const s of sites)el('polygon',{points:pts(s),class:'road'});
+el('polygon',{points:pts(connector),class:'road'});
+el('polygon',{points:pts(vacant),fill:'url(#hatch)'});
+for(const r of roadLabels){const t=el('text',{x:r[0],y:r[1],class:'lbl-road',transform:`rotate(${r[3]} ${r[0]} ${r[1]})`});t.textContent=r[2]}
+const landmarks=[
+ {park:1,name:'Sankeshwar Shiv Mandir',hi:'संकेश्वर शिव मंदिर',lines:['SANKESHWAR','SHIV MANDIR'],kind:'Temple & park'},
+ {park:4,name:'Hanuman Mandir',hi:'हनुमान मंदिर',lines:['HANUMAN MANDIR'],kind:'Temple & park'},
+ {park:1,name:'Water Tank (OHT)',hi:'पानी की टंकी',lines:[],kind:'Overhead tank in Shiv Mandir park',tank:true},
+];
+landmarks.forEach(l=>{const[x,y,w,h]=parks[l.park];Object.assign(l,{x,y,w,h,tx:x+w/2,ty:y+h*.42});if(l.tank)Object.assign(l,{cx:x+w-11,cy:y+13})});
+function templeIcon(g,cx,by,k){
+  el('rect',{x:cx-9*k,y:by-3*k,width:18*k,height:3*k,class:'stone'},g);
+  el('rect',{x:cx-6*k,y:by-11*k,width:12*k,height:8*k,class:'stone'},g);
+  el('rect',{x:cx-2*k,y:by-8*k,width:4*k,height:5*k,class:'saf'},g);
+  el('path',{d:`M${cx-5.5*k},${by-11*k} Q${cx-5.5*k},${by-21*k} ${cx},${by-27*k} Q${cx+5.5*k},${by-21*k} ${cx+5.5*k},${by-11*k} Z`,class:'saf'},g);
+  el('circle',{cx,cy:by-28*k,r:1.3*k,class:'saf'},g);
+  el('line',{x1:cx,y1:by-28*k,x2:cx,y2:by-36*k,class:'pole'},g);
+  el('path',{d:`M${cx},${by-36*k} L${cx+7*k},${by-34*k} L${cx},${by-31.5*k} Z`,class:'saf'},g);
+}
+for(const [i,p] of parks.entries()){
+  const l=landmarks.find(l=>l.park===i);
+  const g=el('g',l?{class:'lm','data-lm':landmarks.indexOf(l)}:{});
+  el('rect',{x:p[0],y:p[1],width:p[2],height:p[3],rx:6,class:'park'},g);
+  if(!l){const t=el('text',{x:p[0]+p[2]/2,y:p[1]+p[3]/2,class:'lbl-area'},g);t.textContent='PARK';continue}
+  const k=l.w<80?.8:1.1, cx=p[0]+p[2]/2, by=p[1]+p[3]*(l.w<80?.52:.5);
+  const tg=el('g',{class:'temple'},g);templeIcon(tg,cx,by,k);
+  l.lines.forEach((ln,j)=>{const t=el('text',{x:cx,y:by+6+j*7.5,class:'lbl-temple'},g);t.textContent=ln});
+  const h=el('text',{x:cx,y:by+6+l.lines.length*7.5,class:'lbl-hi'},g);h.textContent=l.hi;
+  const tk=landmarks.find(t=>t.tank&&t.park===i);
+  if(tk){const tg2=el('g',{class:'lm tank','data-lm':landmarks.indexOf(tk)},g),X=tk.cx,Y=tk.cy;
+    el('line',{x1:X-3,y1:Y,x2:X-4.5,y2:Y+9,class:'leg'},tg2);el('line',{x1:X+3,y1:Y,x2:X+4.5,y2:Y+9,class:'leg'},tg2);
+    el('rect',{x:X-5,y:Y-6,width:10,height:7,rx:2,class:'tk'},tg2);
+    const tt=el('text',{x:X,y:Y+13.5,class:'lbl-tank'},tg2);tt.textContent='OHT'}
+}
+el('rect',{x:amen[0],y:amen[1],width:amen[2],height:amen[3],class:'amen'});
+{const t=el('text',{x:amen[0]+amen[2]/2,y:amen[1]+amen[3]/2,class:'lbl-area',style:'font-size:7px;fill:var(--amen-edge)',transform:`rotate(-90 ${amen[0]+amen[2]/2} ${amen[1]+amen[3]/2})`});t.textContent='AMENITIES'}
+const plotG=el('g',{});
+for(const p of plots.values()){
+  const g=el('g',{class:'plot','data-n':p.n},plotG);
+  el('rect',{x:p.x,y:p.y,width:p.w,height:p.h},g);
+  const t=el('text',{x:p.x+p.w/2,y:p.y+p.h/2},g);t.textContent=p.n;
+  if(p.h<12)t.style.fontSize=Math.max(4.5,p.h*.6)+'px';
+  p.g=g;
+}
+for(const s of sites)el('polygon',{points:pts(s),class:'bound'});
+
+// ---- road centrelines (for routing) ----
+const ENTRY=[94,340];
+const roadNet=[
+ [[82,150],[94,340],[106,555]],                                   // Kankad Road (west)
+ [[94,340],[128,340],[197,340]],
+ [[197,152],[197,289],[197,340],[213,364],[213,545]],
+ [[197,152],[280,152],[374,152]],[[280,152],[280,289]],
+ [[197,289],[280,289],[374,289]],
+ [[374,152],[374,289],[374,345],[387,364],[387,545],[387,553]],
+ [[213,364],[300,364],[387,364]],[[300,364],[300,545]],
+ [[387,553],[440,553],[545,553],[600,557]],[[440,553],[440,765]],[[545,553],[545,768]],
+ [[600,557],[710,545],[752,562]],
+ [[752,170],[752,335],[752,408],[752,562]],
+ [[752,335],[850,335],[940,335]],[[850,172],[850,335]],
+ [[940,170],[940,335],[940,408],[940,566]],
+ [[752,408],[842,408],[940,408],[1020,408],[1030,408],[1118,408],[1207,408],[1293,408],[1345,408]],
+ [[1030,165],[1030,345],[1030,408]],
+ [[1118,172],[1118,345],[1118,408],[1118,566]],
+ [[1207,170],[1207,296],[1207,345],[1207,408],[1207,525]],
+ [[1030,345],[1118,345],[1207,345]],
+ [[1207,296],[1293,296],[1345,296]],[[1293,296],[1293,408],[1293,550]],
+ [[842,408],[842,566]],[[1020,408],[1020,566]],
+];
+const UNITS_PER_M=2.2;
+const graph=new Map(),K=p=>p[0]+','+p[1],segs=[];
+for(const line of roadNet)for(let i=0;i<line.length-1;i++){
+  const a=line[i],b=line[i+1],d=Math.hypot(b[0]-a[0],b[1]-a[1]);segs.push([a,b]);
+  for(const [u,v] of [[a,b],[b,a]]){if(!graph.has(K(u)))graph.set(K(u),{p:u,adj:[]});graph.get(K(u)).adj.push([K(v),d])}
+}
+const dist=new Map(),prev=new Map();
+{ // Dijkstra once from the entry
+  const q=[[0,K(ENTRY)]];dist.set(K(ENTRY),0);
+  while(q.length){q.sort((a,b)=>a[0]-b[0]);const[d,u]=q.shift();if(d>dist.get(u))continue;
+    for(const[v,w]of graph.get(u).adj){const nd=d+w;if(nd<(dist.get(v)??1e9)){dist.set(v,nd);prev.set(v,u);q.push([nd,v])}}}
+}
+const pathTo=key=>{const out=[];for(let k=key;k;k=prev.get(k))out.unshift(graph.get(k).p);return out};
+function routeTo(r){
+  const cx=r.x+r.w/2,cy=r.y+r.h/2;let best=null;
+  for(const[a,b]of segs){const dx=b[0]-a[0],dy=b[1]-a[1],L2=dx*dx+dy*dy;let t=((cx-a[0])*dx+(cy-a[1])*dy)/L2;t=Math.max(0,Math.min(1,t));
+    const P=[a[0]+t*dx,a[1]+t*dy],d=Math.hypot(P[0]-cx,P[1]-cy);if(!best||d<best.d)best={d,a,b,P}}
+  const{a,b,P}=best,da=dist.get(K(a))+Math.hypot(P[0]-a[0],P[1]-a[1]),db=dist.get(K(b))+Math.hypot(P[0]-b[0],P[1]-b[1]);
+  const via=da<=db?a:b,pts=pathTo(K(via));pts.push(P);
+  const D=[Math.max(r.x,Math.min(r.x+r.w,P[0])),Math.max(r.y,Math.min(r.y+r.h,P[1]))];pts.push(D);
+  let len=0;for(let i=1;i<pts.length;i++)len+=Math.hypot(pts[i][0]-pts[i-1][0],pts[i][1]-pts[i-1][1]);
+  return{pts,m:len/UNITS_PER_M,target:r};
+}
+const routeG=el('g',{});
+{const e=el('g',{class:'entry'});el('circle',{cx:ENTRY[0],cy:ENTRY[1],r:6},e);const t=el('text',{x:ENTRY[0]+9,y:ENTRY[1]-8},e);t.textContent='ENTRY'}
+let route=null;
+function drawRoute(rt){
+  routeG.innerHTML='';route=rt;
+  if(rt){const pp=pts(rt.pts);el('polyline',{points:pp,class:'rt-case'},routeG);el('polyline',{points:pp,class:'rt-line'},routeG);
+    const r=rt.target;el('rect',{x:r.x-2,y:r.y-2,width:r.w+4,height:r.h+4,rx:3,class:'rt-end'},routeG)}
+  if(T)T.setRoute(rt);
+}
+function routeBox(rt){let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;for(const[x,y]of rt.pts){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y)}
+  return{x:x0-40,y:y0-40,w:x1-x0+80,h:y1-y0+80}}
+function showRoute(r){const rt=routeTo(r);drawRoute(rt);if(view==='3d')T.focusBox(routeBox(rt));else fitTo(routeBox(rt));showDetail(current)}
+
+// ---- detail panel ----
+const detail=document.getElementById('detail');
+const fmt=(v,d=2)=>v.toLocaleString('en-IN',{minimumFractionDigits:d,maximumFractionDigits:d});
+let current=null; // plot or landmark shown in the card
+const routeHtml=t=>route&&route.target===t
+  ?`<div class="route"><span>Route from entry <b>≈ ${Math.round(route.m/10)*10} m</b> · ${Math.max(1,Math.round(route.m/80))} min walk</span><span style="display:flex;gap:6px"><button type="button" data-pdf>PDF</button><button type="button" data-clear>Clear</button></span></div>`
+  :`<div class="route"><span class="hint">Coming from outside?</span><button type="button" class="primary" data-route>Show route</button></div>`;
+function showDetail(p){
+  current=p;
+  if(!p){detail.innerHTML='<div class="empty"><p class="hint">Tap a plot or a temple to see details and the route from the entry.</p><button type="button" class="more" data-more>Legend &amp; areas</button></div>';return}
+  if(p.lm){detail.innerHTML=`<div class="pd" style="display:block"><div class="pno" style="font-size:26px;color:var(${p.tank?'--tank':'--temple'})">${p.name}</div><div class="hi">${p.hi} · ${p.kind}</div>${routeHtml(p)}</div>`;return}
+  let rows='';
+  if(p.W){
+    const a=p.W*p.D;
+    rows+=`<dt>Size</dt><dd>${p.W.toFixed(2)} × ${p.D.toFixed(2)} m${p.approx?' ≈':''}</dd>
+      <dt>Area</dt><dd>${fmt(a,1)} m² · ${fmt(a*10.7639,0)} ft²</dd>`;
+  } else rows+=`<dt>Size</dt><dd>Irregular, see plan</dd>`;
+  rows+=`<dt>Sector</dt><dd>${p.sec}</dd>`;
+  detail.innerHTML=`<div class="pd" style="display:block"><div style="display:flex;align-items:center;gap:16px"><div class="pno">${p.n}<small>Plot</small></div><dl>${rows}</dl></div>${routeHtml(p)}</div>`;
+}
+let selected=null,view='2d',T=null;
+function select(n){
+  if(selected)selected.g.classList.remove('sel');
+  selected=plots.get(n)||null;
+  if(selected)selected.g.classList.add('sel');
+  if(route&&route.target!==selected)drawRoute(null);
+  showDetail(selected);
+  if(T)T.highlight(selected);
+}
+function selectLandmark(i){
+  select(null);const l=landmarks[i];l.lm=true;showDetail(l);
+}
+
+// ---- size table ----
+{
+  const c=new Map();
+  for(const p of plots.values()){const k=p.W&&!p.approx?`${p.W.toFixed(2)} × ${p.D.toFixed(2)} m`:'Tapered / irregular';c.set(k,(c.get(k)||0)+1)}
+  const rows=[...c].sort((a,b)=>b[1]-a[1]).map(([k,v])=>`<tr><td>${k}</td><td class="n">${v}</td></tr>`).join('');
+  document.getElementById('sizeTable').innerHTML=rows+`<tr><td><b>Total plots</b></td><td class="n"><b>${plots.size}</b></td></tr>`;
+}
+
+// ---- pan / zoom on viewBox ----
+const FIT={x:55,y:130,w:1305,h:650};
+let vb={...FIT};
+function apply(){svg.setAttribute('viewBox',`${vb.x} ${vb.y} ${vb.w} ${vb.h}`)}
+function fitTo(r){
+  const R=svg.getBoundingClientRect(),ar=R.height/Math.max(R.width,1);
+  let w=r.w,h=r.w*ar; if(h<r.h){h=r.h;w=r.h/ar}
+  vb={x:r.x+r.w/2-w/2,y:r.y+r.h/2-h/2,w,h};apply();
+}
+function zoomAt(f,cx,cy){
+  const nw=Math.min(Math.max(vb.w*f,60),4000),k=nw/vb.w;
+  vb={x:cx-(cx-vb.x)*k,y:cy-(cy-vb.y)*k,w:nw,h:vb.h*k};apply();
+}
+const toSvg=(clientX,clientY)=>{const R=svg.getBoundingClientRect();return[vb.x+(clientX-R.left)/R.width*vb.w,vb.y+(clientY-R.top)/R.height*vb.h]};
+svg.addEventListener('wheel',e=>{e.preventDefault();const[x,y]=toSvg(e.clientX,e.clientY);zoomAt(Math.exp(e.deltaY*0.0015),x,y)},{passive:false});
+const ptrs=new Map();let moved=0,pinch=null,downTarget=null;
+svg.addEventListener('pointerdown',e=>{svg.setPointerCapture(e.pointerId);ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});moved=0;downTarget=e.target.closest('.plot,.lm');svg.classList.add('dragging');
+  if(ptrs.size===2){const[a,b]=[...ptrs.values()];pinch=Math.hypot(a.x-b.x,a.y-b.y)}});
+svg.addEventListener('pointermove',e=>{
+  if(!ptrs.has(e.pointerId)){const g=e.target.closest&&e.target.closest('.plot');if(g&&e.pointerType==='mouse'&&!selected)showDetail(plots.get(+g.dataset.n));return}
+  const prev=ptrs.get(e.pointerId),R=svg.getBoundingClientRect();
+  ptrs.set(e.pointerId,{x:e.clientX,y:e.clientY});
+  if(ptrs.size===1){const dx=e.clientX-prev.x,dy=e.clientY-prev.y;moved+=Math.abs(dx)+Math.abs(dy);vb.x-=dx*vb.w/R.width;vb.y-=dy*vb.h/R.height;apply()}
+  else if(ptrs.size===2&&pinch){const[a,b]=[...ptrs.values()],d=Math.hypot(a.x-b.x,a.y-b.y);moved+=10;const[cx,cy]=toSvg((a.x+b.x)/2,(a.y+b.y)/2);zoomAt(pinch/d,cx,cy);pinch=d}
+});
+const up=e=>{ptrs.delete(e.pointerId);if(ptrs.size<2)pinch=null;if(!ptrs.size){svg.classList.remove('dragging');if(moved<5){setSheet(false);if(downTarget&&downTarget.dataset.lm)selectLandmark(+downTarget.dataset.lm);else if(downTarget)select(+downTarget.dataset.n);else{select(null);drawRoute(null);showDetail(null)}}}};
+svg.addEventListener('pointerup',up);svg.addEventListener('pointercancel',up);
+svg.addEventListener('pointerleave',e=>{if(e.pointerType==='mouse'&&!selected&&!ptrs.size)showDetail(null)});
+const center=()=>[vb.x+vb.w/2,vb.y+vb.h/2];
+document.getElementById('zin').onclick=()=>view==='3d'?T.dolly(1/1.5):zoomAt(1/1.5,...center());
+document.getElementById('zout').onclick=()=>view==='3d'?T.dolly(1.5):zoomAt(1.5,...center());
+document.getElementById('zfit').onclick=()=>view==='3d'?T.reset():fitTo(FIT);
+new ResizeObserver(()=>fitTo(selected?{x:selected.x-60,y:selected.y-40,w:120+selected.w,h:80+selected.h}:FIT)).observe(svg);
+
+// ---- search ----
+const msg=document.getElementById('msg');
+document.getElementById('searchForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const n=parseInt(document.getElementById('q').value,10);
+  const p=plots.get(n);
+  if(!p){msg.textContent=Number.isNaN(n)?'Enter a plot number.':`No plot ${n}. Plots run from 1 to ${plots.size}.`;return}
+  msg.textContent='';document.getElementById('q').blur();setSheet(false);select(n);showRoute(p);
+});
+
+// ---- scan overlay ----
+const scan=document.getElementById('scan');
+document.getElementById('scanOp').addEventListener('input',e=>scan.setAttribute('opacity',e.target.value/100));
+
+// ---- bottom sheet (phones) ----
+const sheet=document.getElementById('sheet'),grab=document.getElementById('grab');
+function setSheet(open){sheet.classList.toggle('open',open);grab.setAttribute('aria-expanded',open)}
+grab.addEventListener('click',()=>setSheet(!sheet.classList.contains('open')));
+detail.addEventListener('click',e=>{
+  if(e.target.closest('[data-more]'))setSheet(true);
+  if(e.target.closest('[data-route]')&&current)showRoute(current);
+  if(e.target.closest('[data-clear]')){drawRoute(null);showDetail(current)}
+  if(e.target.closest('[data-pdf]'))exportPdf();
+});
+document.querySelectorAll('[data-lm]').forEach(b=>{if(b.tagName==='BUTTON')b.addEventListener('click',()=>{const i=+b.dataset.lm,l=landmarks[i];setSheet(false);selectLandmark(i);
+  if(view==='3d')T.focusBox({x:l.x-40,y:l.y-40,w:l.w+80,h:l.h+80});else fitTo({x:l.x-60,y:l.y-50,w:l.w+120,h:l.h+100})})});
+let sy=null;
+for(const h of [grab,document.getElementById('peek')]){
+  h.addEventListener('pointerdown',e=>{sy=e.clientY});
+  h.addEventListener('pointerup',e=>{if(sy==null)return;const dy=e.clientY-sy;sy=null;if(dy<-30)setSheet(true);else if(dy>30)setSheet(false)});
+}
+
+// ---- colour mode ----
+const modeBtns=document.querySelectorAll('.theme button');
+function setMode(m){
+  if(m==='auto')document.documentElement.removeAttribute('data-theme');
+  else document.documentElement.setAttribute('data-theme',m);
+  modeBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.mode===m));
+  try{localStorage.setItem('mode',m)}catch(e){}
+  if(T)T.recolor();
+}
+modeBtns.forEach(b=>b.addEventListener('click',()=>setMode(b.dataset.mode)));
+let saved='light';try{saved=localStorage.getItem('mode')||'light'}catch(e){}
+setMode(saved);
+
+
+// ---- PDF export (vector, drawn from the plan data) ----
+document.getElementById('pdfBtn').addEventListener('click',()=>exportPdf());
+let pdfBusy=false;
+async function exportPdf(){
+  if(pdfBusy)return;pdfBusy=true;msg.textContent='Preparing…';
+  try{
+    const tgt=current, rt=route&&route.target===tgt?route:null;
+    const dl=window.claude?.use?await window.claude.use('downloads'):undefined;
+    if(dl===null){showImageExport(tgt,rt);return}            // e.g. not signed in: offer an image instead
+    if(!window.jspdf)await loadScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    const {doc,name}=buildPdf(tgt,rt);
+    if(dl===undefined){doc.save(name);msg.textContent='';return}   // opened outside claude.ai
+    try{await dl.save({filename:name,data:doc.output('blob')});msg.textContent=''}
+    catch(err){const c=err&&err.code;
+      if(c==='declined')msg.textContent='';
+      else if(c==='rate_limited')msg.textContent='A save prompt is already open.';
+      else showImageExport(tgt,rt)}
+  }catch(e){try{showImageExport(current,route&&route.target===current?route:null)}catch(_){msg.textContent='Could not create the export. Try again.'}}
+  finally{pdfBusy=false}
+}
+function showImageExport(tgt,rt){
+  const {doc}=buildPdf(tgt,rt,canvasDoc());
+  document.getElementById('imgOut').src=doc.output();
+  msg.textContent='';const d=document.getElementById('imgDlg');d.showModal?d.showModal():d.setAttribute('open','');
+}
+document.getElementById('imgClose').addEventListener('click',()=>{const d=document.getElementById('imgDlg');d.close?d.close():d.removeAttribute('open')});
+// A canvas stand-in for the parts of jsPDF that buildPdf uses, so the same layout renders to a PNG.
+function canvasDoc(){
+  const k=8,cv=document.createElement('canvas');cv.width=297*k;cv.height=210*k;const c=cv.getContext('2d');
+  c.fillStyle='#fff';c.fillRect(0,0,cv.width,cv.height);
+  let tc='#000',fs=12,wt='400';
+  const font=()=>{c.font=`${wt} ${fs*.3528*k}px Helvetica, Arial, sans-serif`};
+  const paint=st=>{if(st===null)return;if(!st||st==='S')c.stroke();else if(st==='F')c.fill();else{c.fill();c.stroke()}};
+  const d={
+    setFillColor:v=>{c.fillStyle=v},setDrawColor:v=>{c.strokeStyle=v},setTextColor:v=>{tc=v},
+    setLineWidth:w=>{c.lineWidth=w*k},setFont:(f,st)=>{wt=st==='bold'?'700':'400'},setFontSize:v=>{fs=v},
+    setLineDashPattern:a=>c.setLineDash(a.map(v=>v*k)),setLineCap:v=>{c.lineCap=v},setLineJoin:v=>{c.lineJoin=v},
+    saveGraphicsState:()=>c.save(),restoreGraphicsState:()=>c.restore(),clip:()=>c.clip(),discardPath:()=>{},
+    getTextWidth:t=>{font();return c.measureText(t).width/k},
+    splitTextToSize:(t,w)=>{font();const out=[];let line='';for(const word of String(t).split(' ')){const tr=line?line+' '+word:word;if(c.measureText(tr).width/k>w&&line){out.push(line);line=word}else line=tr}if(line)out.push(line);return out},
+    text:(str,x,y,o={})=>{font();c.fillStyle=tc;c.textAlign=o.align||'left';c.textBaseline=o.baseline==='middle'?'middle':o.baseline==='top'?'top':'alphabetic';
+      const L=Array.isArray(str)?str:[str],lh=fs*.3528*1.15;
+      L.forEach((t,i)=>{c.save();c.translate(x*k,(y+i*lh)*k);if(o.angle)c.rotate(-o.angle*Math.PI/180);c.fillText(t,0,0);c.restore()})},
+    rect:(x,y,w,h,st)=>{c.beginPath();c.rect(x*k,y*k,w*k,h*k);paint(st)},
+    roundedRect:(x,y,w,h,rx,ry,st)=>{c.beginPath();c.roundRect?c.roundRect(x*k,y*k,w*k,h*k,rx*k):c.rect(x*k,y*k,w*k,h*k);paint(st)},
+    lines:(dl,x,y,sc,st,closed)=>{c.beginPath();let px=x,py=y;c.moveTo(px*k,py*k);for(const[dx,dy]of dl){px+=dx;py+=dy;c.lineTo(px*k,py*k)}if(closed)c.closePath();paint(st)},
+    circle:(x,y,r,st)=>{c.beginPath();c.arc(x*k,y*k,r*k,0,Math.PI*2);paint(st)},
+    triangle:(a,b,e,f,g,h,st)=>{c.beginPath();c.moveTo(a*k,b*k);c.lineTo(e*k,f*k);c.lineTo(g*k,h*k);c.closePath();paint(st)},
+    line:(a,b,e,f)=>{c.beginPath();c.moveTo(a*k,b*k);c.lineTo(e*k,f*k);c.stroke()},
+    output:()=>cv.toDataURL('image/png'),
+  };
+  return d;
+}
+function buildPdf(tgt,rt,given){
+  const doc=given||new window.jspdf.jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
+  const C={ink:'#1c2624',muted:'#5d6966',land:'#eef0e6',road:'#d8d6cf',plot:'#f4dd8f',plotE:'#9a7a22',park:'#a6cf8f',parkE:'#4f8a3a',amen:'#b9c9ec',bound:'#3b2f2a',route:'#2563eb',temple:'#e8731a',sel:'#1f4fa3'};
+  const isPlot=tgt&&!tgt.lm,title=tgt?(isPlot?`Directions to Plot ${tgt.n}`:`Directions to ${tgt.name}`):'Layout Plan';
+  // extent: what is on screen in 2D; in 3D the route, the selection or the whole plan
+  // frame the route, else the selection, else what is on screen (never wider than the whole plan)
+  let ext=rt?routeBox(rt):tgt?{x:tgt.x-90,y:tgt.y-70,w:tgt.w+180,h:tgt.h+140}:view==='2d'?{...vb}:{...FIT};
+  if(ext.w*ext.h>FIT.w*FIT.h*1.2)ext={...FIT};
+  const side=!!tgt, FX=10,FY=27,FW=side?200:277,FH=166;
+  const sc=Math.min(FW/ext.w,FH/ext.h), ox=FX+(FW-ext.w*sc)/2-ext.x*sc, oy=FY+(FH-ext.h*sc)/2-ext.y*sc;
+  // header
+  doc.setTextColor(C.ink);doc.setFont('helvetica','bold');doc.setFontSize(17);doc.text('Shankheshwar Colony · '+title,10,15);
+  doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(C.muted);
+  doc.text('Village Kanadia, Teh. & Distt. Indore · Kh. No. 107/1/2, 109, 114/1/2, 116/1, 116/2 · 413 plots',10,21);
+  // map frame
+  doc.setFillColor(C.land);doc.rect(FX,FY,FW,FH,'F');
+  doc.saveGraphicsState();doc.rect(FX,FY,FW,FH,null);doc.clip();doc.discardPath();
+  drawPlan(doc,C,(x,y)=>[ox+x*sc,oy+y*sc],sc,rt,tgt,true);
+  doc.restoreGraphicsState();
+  doc.setDrawColor('#c9cdc4');doc.setLineWidth(.3);doc.rect(FX,FY,FW,FH,'S');
+  // north arrow
+  const nx=FX+FW-9,ny=FY+11;doc.setFillColor('#ffffff');doc.circle(nx,ny,6,'F');doc.setFillColor(C.ink);
+  doc.triangle(nx,ny-4.5,nx-2.2,ny+2.5,nx+2.2,ny+2.5,'F');doc.setFontSize(6);doc.setFont('helvetica','bold');doc.setTextColor(C.ink);doc.text('N',nx,ny+4.6,{align:'center',baseline:'top'});
+  // legend
+  let lx=FX,ly=FY+FH+6;doc.setFontSize(7.5);doc.setFont('helvetica','normal');
+  for(const[c,e,l]of [[C.plot,C.plotE,'Plot'],[C.park,C.parkE,'Park'],[C.road,C.road,'Road'],[C.temple,C.temple,'Temple'],['#2f7fc1','#2f7fc1','Water tank'],[C.route,C.route,'Route from entry']]){
+    doc.setFillColor(c);doc.setDrawColor(e);doc.rect(lx,ly-2.6,3.4,3.4,'FD');doc.setTextColor(C.ink);doc.text(l,lx+5,ly);lx+=doc.getTextWidth(l)+12}
+  // side panel
+  if(side){
+    const px=FX+FW+7,pw=287-px;let y=FY+4;
+    doc.setTextColor(C.muted);doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.text(isPlot?'PLOT':'LANDMARK',px,y);y+=isPlot?13:8;
+    doc.setTextColor(isPlot?C.ink:C.temple);doc.setFontSize(isPlot?34:15);
+    const nm=doc.splitTextToSize(isPlot?String(tgt.n):tgt.name,pw);doc.text(nm,px,y);y+=isPlot?8:nm.length*6+2;
+    doc.setFont('helvetica','normal');doc.setFontSize(9);doc.setTextColor(C.ink);
+    const kv=(k,v)=>{doc.setTextColor(C.muted);doc.text(k,px,y);doc.setTextColor(C.ink);doc.text(v,px+16,y);y+=5.2};
+    if(isPlot){
+      if(tgt.W){const a=tgt.W*tgt.D;kv('Size',`${tgt.W.toFixed(2)} x ${tgt.D.toFixed(2)} m${tgt.approx?' (approx.)':''}`);kv('Area',`${fmt(a,1)} m² · ${fmt(a*10.7639,0)} sq ft`)}
+      else kv('Size','Irregular, see plan');
+      kv('Sector',tgt.sec);
+      const near=landmarks.map(l=>[l,Math.hypot(l.x+l.w/2-(tgt.x+tgt.w/2),l.y+l.h/2-(tgt.y+tgt.h/2))/UNITS_PER_M]).sort((a,b)=>a[1]-b[1])[0];
+      kv('Near',`${near[0].name} (${Math.round(near[1]/10)*10} m)`);
+    }else kv('Type',tgt.kind);
+    y+=3;doc.setDrawColor('#d5d9d2');doc.line(px,y,px+pw,y);y+=6;
+    doc.setFont('helvetica','bold');doc.setFontSize(9.5);doc.setTextColor(C.route);
+    if(rt){
+      doc.text(`About ${Math.round(rt.m/10)*10} m · ${Math.max(1,Math.round(rt.m/80))} min walk`,px,y);y+=6;
+      doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(C.ink);
+      const steps=['Enter the colony from Kankad Road (west side), at the ENTRY marker.','Follow the blue line along the colony roads.',isPlot?`Plot ${tgt.n} is outlined in blue at the end of the line.`:`${tgt.name} is at the end of the line.`];
+      steps.forEach((t,i)=>{const L=doc.splitTextToSize(t,pw-6);doc.text(`${i+1}.`,px,y);doc.text(L,px+5,y);y+=L.length*4+2});
+    }else{doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(C.muted);doc.text(doc.splitTextToSize('Tap "Show route" before exporting to include directions from the entry.',pw),px,y);y+=10}
+    // overview
+    const ow=pw,oh=ow*FIT.h/FIT.w,oY=FY+FH-oh;
+    doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(C.muted);doc.text('WHOLE COLONY',px,oY-2.5);
+    doc.setFillColor(C.land);doc.rect(px,oY,ow,oh,'F');
+    const os=ow/FIT.w;drawPlan(doc,C,(x,y)=>[px+(x-FIT.x)*os,oY+(y-FIT.y)*os],os,rt,tgt,false);
+    doc.setDrawColor(C.sel);doc.setLineWidth(.35);doc.rect(px+(ext.x-FIT.x)*os,oY+(ext.y-FIT.y)*os,ext.w*os,ext.h*os,'S');
+  }
+  doc.setFont('helvetica','normal');doc.setFontSize(6.5);doc.setTextColor(C.muted);
+  doc.text(`Generated ${new Date().toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'})} · Redrawn from the approved layout plan (Town & Country Planning, Indore, 2006–07). Positions are approximate; not for survey.`,10,205);
+  const name=tgt?(isPlot?`Plot-${tgt.n}-Shankheshwar-map.pdf`:`${tgt.name.replace(/\s+/g,'-')}-Shankheshwar-map.pdf`):'Shankheshwar-layout-plan.pdf';
+  return{doc,name};
+}
+function drawPlan(doc,C,T,sc,rt,tgt,detail){
+  const poly=(ptsArr,style)=>{const p0=T(...ptsArr[0]);const d=[];let prevP=p0;for(let i=1;i<ptsArr.length;i++){const q=T(...ptsArr[i]);d.push([q[0]-prevP[0],q[1]-prevP[1]]);prevP=q}doc.lines(d,p0[0],p0[1],[1,1],style,true)};
+  const rect=(x,y,w,h,style,r)=>{const[a,b]=T(x,y);r?doc.roundedRect(a,b,w*sc,h*sc,r*sc,r*sc,style):doc.rect(a,b,w*sc,h*sc,style)};
+  const pt=u=>u*sc*2.835;
+  doc.setLineWidth(.1);
+  doc.setFillColor(C.road);for(const s of sites)poly(s,'F');poly(connector,'F');doc.setFillColor(C.land);poly(vacant,'F');
+  if(detail){doc.setDrawColor('#8a8f86');doc.setLineDashPattern([1.5,1],0);doc.setLineWidth(.2);poly([[66,140],[98,140],[122,560],[90,560]],'S');doc.setLineDashPattern([],0)}
+  doc.setFillColor(C.park);doc.setDrawColor(C.parkE);doc.setLineWidth(.2);for(const p of parks)rect(p[0],p[1],p[2],p[3],'FD',5);
+  doc.setFillColor(C.amen);rect(...amen,'F');
+  doc.setDrawColor(C.plotE);doc.setLineWidth(Math.max(.05,.25*sc));
+  for(const p of plots.values()){doc.setFillColor(tgt===p?C.sel:C.plot);rect(p.x,p.y,p.w,p.h,'FD')}
+  if(detail){
+    doc.setFont('helvetica','bold');
+    const fs=Math.max(2.4,Math.min(9,pt(6.5)));doc.setFontSize(fs);
+    for(const p of plots.values()){const[a,b]=T(p.x+p.w/2,p.y+p.h/2);doc.setTextColor(tgt===p?'#ffffff':'#3d3007');doc.text(String(p.n),a,b,{align:'center',baseline:'middle'})}
+    doc.setTextColor('#6f6a5e');doc.setFontSize(Math.max(2.2,Math.min(8,pt(5.5))));
+    for(const r of roadLabels){if(r[3]!==0)continue;const[a,b]=T(r[0],r[1]);doc.text(r[2],a,b,{align:'center',baseline:'middle'})}
+    doc.setFontSize(Math.max(3,Math.min(10,pt(9))));doc.setTextColor('#8a9083');
+    for(const l of landLabels){const[a,b]=T(l[0],l[1]);doc.text(l[2],a,b,{align:'center'})}
+    for(const p of parks){if(landmarks.some(l=>l.x===p[0]))continue;const[a,b]=T(p[0]+p[2]/2,p[1]+p[3]/2);doc.setTextColor(C.parkE);doc.setFontSize(Math.max(3,Math.min(12,pt(11))));doc.text('PARK',a,b,{align:'center',baseline:'middle'})}
+  }
+  // temples
+  for(const l of landmarks.filter(l=>l.tank)){const[a,b]=T(l.cx,l.cy);doc.setFillColor('#2f7fc1');doc.roundedRect(a-5*sc,b-6*sc,10*sc,7*sc,1.5*sc,1.5*sc,'F');doc.setDrawColor('#2f7fc1');doc.setLineWidth(Math.max(.15,1.1*sc));doc.line(a-3*sc,b,a-4.5*sc,b+9*sc);doc.line(a+3*sc,b,a+4.5*sc,b+9*sc);
+    if(detail){doc.setFont('helvetica','bold');doc.setTextColor('#2f7fc1');doc.setFontSize(Math.max(2.5,Math.min(8,pt(5))));doc.text('OHT',a,b+13*sc,{align:'center',baseline:'middle'})}}
+  for(const l of landmarks.filter(l=>!l.tank)){const k=(l.w<80?.8:1.1)*sc,[cx,cy]=T(l.x+l.w/2,l.y+l.h*.5);
+    doc.setFillColor(C.temple);doc.triangle(cx-5.5*k,cy-4*k,cx+5.5*k,cy-4*k,cx,cy-20*k,'F');doc.rect(cx-6*k,cy-4*k,12*k,7*k,'F');
+    if(detail){doc.setFont('helvetica','bold');doc.setTextColor(C.temple);doc.setFontSize(Math.max(3,Math.min(10,pt(6.5))));
+      l.lines.forEach((ln,j)=>doc.text(ln,cx,cy+(8+j*7.5)*sc,{align:'center',baseline:'middle'}))}}
+  doc.setDrawColor(C.bound);doc.setLineWidth(detail?.5:.25);for(const s of sites)poly(s,'S');
+  if(rt){
+    const P=rt.pts.map(q=>T(...q)),d=[];for(let i=1;i<P.length;i++)d.push([P[i][0]-P[i-1][0],P[i][1]-P[i-1][1]]);
+    doc.setLineCap('round');doc.setLineJoin('round');
+    if(detail){doc.setDrawColor('#ffffff');doc.setLineWidth(2.2);doc.lines(d,P[0][0],P[0][1],[1,1],'S',false)}
+    doc.setDrawColor(C.route);doc.setLineWidth(detail?1.2:.6);doc.lines(d,P[0][0],P[0][1],[1,1],'S',false);
+    const r=rt.target;doc.setLineWidth(detail?.6:.3);rect(r.x-2,r.y-2,r.w+4,r.h+4,'S');
+  }
+  const[ex,ey]=T(...ENTRY);doc.setFillColor(C.route);doc.setDrawColor('#ffffff');doc.setLineWidth(.3);doc.circle(ex,ey,detail?1.8:1,'FD');
+  if(detail){doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(C.route);doc.text('ENTRY',ex-1,ey-3.2)}
+}
+
+// ---- 3D view (three.js, loaded on first use) ----
+const viewBtns=document.querySelectorAll('.view button'),threeEl=document.getElementById('three'),tag=document.getElementById('tag');
+const loadScript=src=>new Promise((res,rej)=>{const s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s)});
+async function setView(v){
+  view=v;viewBtns.forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===v));
+  const is3=v==='3d';svg.hidden=is3;threeEl.hidden=!is3;
+  document.getElementById('hint2d').hidden=is3;document.getElementById('hint3d').hidden=!is3;
+  if(!is3){tag.hidden=true;if(T)T.stop();return}
+  if(!T){
+    msg.textContent='Loading 3D…';
+    try{
+      await loadScript('https://cdn.jsdelivr.net/npm/three@0.147.0/build/three.min.js');
+      await loadScript('https://cdn.jsdelivr.net/npm/three@0.147.0/examples/js/controls/OrbitControls.js');
+      T=init3d();
+    }catch(err){msg.textContent='3D view could not load. Check your connection and try again.';setView('2d');return}
+    msg.textContent='';
+  }
+  T.start();
+  T.setRoute(route);
+  if(route)T.focusBox(routeBox(route));else if(selected){T.highlight(selected);T.focus(selected)}
+}
+viewBtns.forEach(b=>b.addEventListener('click',()=>setView(b.dataset.view)));
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change',()=>{if(T)T.recolor()});
+
+function init3d(){
+  const tok=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  const CX=707,CZ=455,FLOOR=6.75;
+  const hash=n=>{let h=Math.imul(n,2654435761)>>>0;h^=h>>>15;return h>>>0};
+  const renderer=new THREE.WebGLRenderer({antialias:true});
+  renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+  renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  threeEl.appendChild(renderer.domElement);
+  const scene=new THREE.Scene();
+  const camera=new THREE.PerspectiveCamera(38,1,5,8000);
+  const controls=new THREE.OrbitControls(camera,renderer.domElement);
+  controls.enableDamping=true;controls.dampingFactor=.08;controls.maxPolarAngle=1.42;controls.minDistance=60;controls.maxDistance=3000;controls.screenSpacePanning=false;
+
+  scene.add(new THREE.HemisphereLight(0xffffff,0x6f7560,.5));
+  const sun=new THREE.DirectionalLight(0xfff4e0,.62);
+  sun.position.set(CX-500,900,CZ+350);sun.target.position.set(CX,0,CZ);scene.add(sun,sun.target);
+  sun.castShadow=true;const sc=sun.shadow.camera;sc.left=-900;sc.right=900;sc.top=700;sc.bottom=-700;sc.near=100;sc.far=2500;
+  sun.shadow.mapSize.set(innerWidth<700?1024:2048,innerWidth<700?1024:2048);sun.shadow.bias=-.0008;
+
+  const mats={};const M=k=>mats[k]||(mats[k]=new THREE.MeshLambertMaterial());
+  const ground=new THREE.Mesh(new THREE.PlaneGeometry(5000,4000).rotateX(-Math.PI/2),M('land'));
+  ground.position.set(CX,0,CZ);ground.receiveShadow=true;scene.add(ground);
+  const flat=(poly,y,mat)=>{const sh=new THREE.Shape(poly.map(([x,z])=>new THREE.Vector2(x,-z)));const g=new THREE.ShapeGeometry(sh).rotateX(-Math.PI/2);const m=new THREE.Mesh(g,mat);m.position.y=y;m.receiveShadow=true;scene.add(m);return m};
+  for(const s of sites)flat(s,.3,M('road'));
+  flat(connector,.3,M('road'));
+  flat(vacant,.4,M('land'));
+  const lineMat=new THREE.LineBasicMaterial();
+  for(const s of sites){const g=new THREE.BufferGeometry().setFromPoints(s.map(([x,z])=>new THREE.Vector3(x,1.2,z)));scene.add(new THREE.LineLoop(g,lineMat))}
+  // boundary wall
+  for(const s of sites)for(let i=0;i<s.length;i++){const a=s[i],b=s[(i+1)%s.length],len=Math.hypot(b[0]-a[0],b[1]-a[1]);
+    const w=new THREE.Mesh(new THREE.BoxGeometry(len,4,1.2),M('bwall'));w.position.set((a[0]+b[0])/2,2,(a[1]+b[1])/2);w.rotation.y=-Math.atan2(b[1]-a[1],b[0]-a[0]);w.castShadow=true;scene.add(w)}
+  // parks + trees
+  const trees=[];
+  const temples=[];
+  for(const [pi,[x,z,w,h]] of parks.entries()){const lmk=landmarks.find(l=>l.park===pi);const m=new THREE.Mesh(new THREE.BoxGeometry(w,1,h),M('park'));m.position.set(x+w/2,.8,z+h/2);m.receiveShadow=true;scene.add(m);
+    const nx=Math.max(2,Math.round(w/16)),nz=Math.max(2,Math.round(h/16));
+    for(let i=0;i<nx;i++)for(let j=0;j<nz;j++){if(i>0&&i<nx-1&&j>0&&j<nz-1&&(i+j)%2)continue;const tx=x+(i+.5)*w/nx,tz=z+(j+.5)*h/nz;if(lmk&&!lmk.tank&&Math.hypot(tx-(x+w/2),tz-(z+h/2))<(w<80?24:30))continue;const r=hash(trees.length+7);trees.push([x+(i+.5)*w/nx+(r%5-2),z+(j+.5)*h/nz+((r>>4)%5-2),.8+((r>>8)%5)/10])}}
+  for(const l of landmarks.filter(l=>l.tank)){
+    const g=new THREE.Group();g.position.set(l.cx,1.3,l.cy+3);
+    const add=(geo,mat,x,y,z)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);m.castShadow=true;m.userData.lm=landmarks.indexOf(l);g.add(m);return m};
+    for(const[dx,dz]of [[-3.5,-3.5],[3.5,-3.5],[-3.5,3.5],[3.5,3.5]])add(new THREE.CylinderGeometry(.5,.6,22,5),M('stone'),dx,11,dz);
+    add(new THREE.CylinderGeometry(6.5,6.5,9,16),M('tank'),0,26.5,0);
+    add(new THREE.ConeGeometry(6.8,3,16),M('tank'),0,32.5,0);
+    scene.add(g);temples.push(g);l.top3=new THREE.Vector3(l.cx,66,l.cy+3);
+  }
+  for(const l of landmarks.filter(l=>!l.tank)){
+    const g=new THREE.Group(),k=l.w<80?.85:1.15;g.position.set(l.x+l.w/2,1.3,l.y+l.h/2);g.scale.setScalar(k);
+    const add=(geo,mat,y,rot)=>{const m=new THREE.Mesh(geo,mat);m.position.y=y;if(rot)m.rotation.y=rot;m.castShadow=m.receiveShadow=true;m.userData.lm=landmarks.indexOf(l);g.add(m);return m};
+    add(new THREE.BoxGeometry(30,3,30),M('stone'),1.5);
+    add(new THREE.BoxGeometry(22,2,22),M('stone'),4);
+    add(new THREE.BoxGeometry(14,12,14),M('stone'),11);
+    add(new THREE.BoxGeometry(5,8,1),M('temple'),9).position.z=7.1;
+    add(new THREE.CylinderGeometry(.5,7.5,22,8),M('temple'),28,Math.PI/8);
+    add(new THREE.SphereGeometry(1.8,10,8),M('temple'),40);
+    add(new THREE.CylinderGeometry(.25,.25,12,5),M('trunk'),46);
+    const flag=add(new THREE.PlaneGeometry(8,5),M('flag'),49);flag.position.x=4;
+    scene.add(g);temples.push(g);l.top3=new THREE.Vector3(l.x+l.w/2,1.3+56*k,l.y+l.h/2);
+  }
+  const crown=new THREE.InstancedMesh(new THREE.ConeGeometry(4.5,13,7),M('tree'),trees.length);
+  const trunk=new THREE.InstancedMesh(new THREE.CylinderGeometry(.7,.9,4,5),M('trunk'),trees.length);
+  const m4=new THREE.Matrix4(),q=new THREE.Quaternion(),v=new THREE.Vector3(),sv=new THREE.Vector3();
+  trees.forEach(([x,z,s],i)=>{m4.compose(v.set(x,1.3+4*s+6.5*s,z),q,sv.set(s,s,s));crown.setMatrixAt(i,m4);m4.compose(v.set(x,1.3+2*s,z),q,sv.set(s,s,s));trunk.setMatrixAt(i,m4)});
+  crown.castShadow=trunk.castShadow=true;scene.add(crown,trunk);
+  {const [x,z,w,h]=amen;const m=new THREE.Mesh(new THREE.BoxGeometry(w-4,FLOOR*2,h-4),M('amen'));m.position.set(x+w/2,FLOOR+.3,z+h/2);m.castShadow=m.receiveShadow=true;scene.add(m)}
+  // plots: plinth + house + roof slab (instanced)
+  const list=[...plots.values()],N=list.length;
+  const box=new THREE.BoxGeometry(1,1,1);
+  const plinth=new THREE.InstancedMesh(box,M('plot'),N),house=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:0xffffff}),N),roof=new THREE.InstancedMesh(box,new THREE.MeshLambertMaterial({color:0xffffff}),N);
+  const tops=[];
+  list.forEach((p,i)=>{
+    const cx=p.x+p.w/2,cz=p.y+p.h/2;
+    m4.compose(v.set(cx,.9,cz),q,sv.set(p.w-.7,1.2,p.h-.7));plinth.setMatrixAt(i,m4);
+    const floors=1+hash(p.n)%3,H=floors*FLOOR;
+    const long=p.w>=p.h; // long side is plot depth; leave a front/back setback along it
+    const hw=long?p.w*.68:p.w-3.5,hd=long?p.h-3.5:p.h*.68;
+    const ox=long?((p.n%2)?-1:1)*p.w*.08:0,oz=long?0:((p.n%2)?-1:1)*p.h*.08;
+    m4.compose(v.set(cx+ox,1.5+H/2,cz+oz),q,sv.set(hw,H,hd));house.setMatrixAt(i,m4);
+    m4.compose(v.set(cx+ox,1.5+H+.6,cz+oz),q,sv.set(hw+1,1.2,hd+1));roof.setMatrixAt(i,m4);
+    tops.push(new THREE.Vector3(cx+ox,1.5+H+2,cz+oz));p.i3=i;
+  });
+  plinth.receiveShadow=true;house.castShadow=house.receiveShadow=true;roof.castShadow=true;
+  scene.add(plinth,house,roof);
+  const col=new THREE.Color(),acc=new THREE.Color();let walls=[];
+  let hi=null;
+  function paintHouse(i,isSel){
+    if(isSel)col.copy(acc);else col.set(walls[hash(list[i].n+3)%walls.length]);
+    house.setColorAt(i,col);col.multiplyScalar(isSel?.75:.72);roof.setColorAt(i,col);
+    house.instanceColor.needsUpdate=roof.instanceColor.needsUpdate=true;
+  }
+  function recolor(){
+    walls=tok('--g-walls').split(',').map(x=>x.trim());
+    for(const k of ['land','road','park','plot','bwall'])M(k).color.set(tok('--g-'+k));
+    M('amen').color.set(tok('--amen'));M('stone').color.set(tok('--temple-stone'));M('temple').color.set(tok('--temple'));M('flag').color.set(tok('--temple'));M('flag').side=THREE.DoubleSide;M('tank').color.set(tok('--tank'));
+    M('tree').color.set(tok('--tree'));M('trunk').color.set(tok('--road-text'));
+    routeMat.color.set(tok('--route'));
+    lineMat.color.set(tok('--bound'));acc.set(tok('--accent'));
+    const bg=new THREE.Color(tok('--sky'));scene.background=bg;scene.fog=new THREE.Fog(bg,2200,5000);
+    for(let i=0;i<N;i++)paintHouse(i,hi===i);
+  }
+  // route ribbon + moving dot
+  const routeMat=new THREE.MeshBasicMaterial(),routeG=new THREE.Group();scene.add(routeG);
+  const dot=new THREE.Mesh(new THREE.SphereGeometry(3.2,14,10),routeMat);dot.visible=false;scene.add(dot);
+  let rpts=null,rlen=0;
+  function setRoute(rt){
+    routeG.clear();rpts=null;dot.visible=false;if(!rt)return;
+    rpts=rt.pts.map(([x,z])=>new THREE.Vector3(x,2.2,z));rlen=0;
+    for(let i=1;i<rpts.length;i++){const a=rpts[i-1],b=rpts[i],L=a.distanceTo(b);rlen+=L;if(L<.01)continue;
+      const m=new THREE.Mesh(new THREE.BoxGeometry(L,1,4.5),routeMat);m.position.copy(a).add(b).multiplyScalar(.5);m.rotation.y=-Math.atan2(b.z-a.z,b.x-a.x);routeG.add(m);
+      const j=new THREE.Mesh(new THREE.CylinderGeometry(2.25,2.25,1,12),routeMat);j.position.copy(b);routeG.add(j)}
+    const pin=new THREE.Mesh(new THREE.CylinderGeometry(.8,.8,26,6),routeMat);pin.position.set(ENTRY[0],13,ENTRY[1]);routeG.add(pin);
+    dot.visible=true;
+  }
+  const entryPos=new THREE.Vector3(ENTRY[0],30,ENTRY[1]);
+  function along(t){let d=t*rlen;for(let i=1;i<rpts.length;i++){const L=rpts[i-1].distanceTo(rpts[i]);if(d<=L)return dot.position.lerpVectors(rpts[i-1],rpts[i],L?d/L:0);d-=L}}
+  recolor();
+
+  function resize(){const w=threeEl.clientWidth,h=threeEl.clientHeight;if(!w||!h)return;renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix()}
+  new ResizeObserver(resize).observe(threeEl);
+  let fly=null;
+  function flyTo(target,pos){fly={t0:performance.now(),ft:controls.target.clone(),fp:camera.position.clone(),tt:target,tp:pos}}
+  function home(instant){
+    const a=Math.max(camera.aspect||1,.45),d=Math.min(2900,1250/Math.min(a,1.8)*1.05);
+    const t=new THREE.Vector3(CX,0,CZ+40),p=new THREE.Vector3(CX-d*.08,d*.8,CZ+d*.62);
+    if(instant){controls.target.copy(t);camera.position.copy(p)}else flyTo(t,p);
+  }
+  function focus(p){const t=new THREE.Vector3(p.x+p.w/2,0,p.y+p.h/2);flyTo(t,t.clone().add(new THREE.Vector3(-40,260,150)))}
+  function focusBox(b){const t=new THREE.Vector3(b.x+b.w/2,0,b.y+b.h/2),d=Math.max(b.w/Math.min(camera.aspect,1.6),b.h)*1.25+120;
+    flyTo(t,t.clone().add(new THREE.Vector3(-d*.08,d*.85,d*.55)))}
+  function dolly(f){const o=camera.position.clone().sub(controls.target).multiplyScalar(f);const L=o.length();if(L<controls.minDistance||L>controls.maxDistance)return;flyTo(controls.target.clone(),controls.target.clone().add(o))}
+  function highlight(p){
+    if(hi!=null)paintHouse(hi,false);
+    hi=p?p.i3:null;if(hi!=null)paintHouse(hi,true);
+    tag.hidden=!p;if(p)tag.textContent='Plot '+p.n;
+  }
+  const proj=new THREE.Vector3();
+  const ltags=landmarks.map(l=>{const d=document.createElement('div');d.className='ltag';if(l.tank){d.style.background='var(--tank)';d.textContent='Water tank'}else d.textContent=l.name;threeEl.parentNode.appendChild(d);return[d,l.top3]});
+  {const d=document.createElement('div');d.className='ltag entry3d';d.textContent='Entry · Kankad Rd';threeEl.parentNode.appendChild(d);ltags.push([d,entryPos])}
+  const place=(el,v)=>{proj.copy(v).project(camera);const r=threeEl.getBoundingClientRect();const off=proj.z>1||Math.abs(proj.x)>1.05||Math.abs(proj.y)>1.05;el.hidden=off;
+    el.style.left=((proj.x+1)/2*r.width)+'px';el.style.top=((1-proj.y)/2*r.height-4)+'px'};
+  function frame(now){
+    if(fly){const k=Math.min(1,(now-fly.t0)/700),e=k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+      controls.target.lerpVectors(fly.ft,fly.tt,e);camera.position.lerpVectors(fly.fp,fly.tp,e);if(k>=1)fly=null}
+    controls.update();
+    if(rpts){along((now/6000)%1);dot.position.y=4}
+    renderer.render(scene,camera);
+    for(const[d,v]of ltags)place(d,v);
+    if(hi!=null){proj.copy(tops[hi]).project(camera);const r=threeEl.getBoundingClientRect();
+      const off=proj.z>1||Math.abs(proj.x)>1.05||Math.abs(proj.y)>1.05;tag.hidden=off;
+      tag.style.left=((proj.x+1)/2*r.width)+'px';tag.style.top=((1-proj.y)/2*r.height-6)+'px'}
+  }
+  // tap to pick
+  const ray=new THREE.Raycaster(),ndc=new THREE.Vector2();let down=null;
+  renderer.domElement.addEventListener('pointerdown',e=>{down={x:e.clientX,y:e.clientY};fly=null});
+  renderer.domElement.addEventListener('pointerup',e=>{
+    if(!down||Math.hypot(e.clientX-down.x,e.clientY-down.y)>6){down=null;return}down=null;
+    const r=renderer.domElement.getBoundingClientRect();ndc.set((e.clientX-r.left)/r.width*2-1,-(e.clientY-r.top)/r.height*2+1);
+    ray.setFromCamera(ndc,camera);const hit=ray.intersectObjects([house,roof,plinth,...temples],true)[0];
+    setSheet(false);
+    if(hit&&hit.object.userData.lm!=null)selectLandmark(hit.object.userData.lm);
+    else if(hit&&hit.instanceId!=null)select(list[hit.instanceId].n);
+    else{select(null);drawRoute(null);showDetail(null)}
+  });
+  resize();home(true);
+  return{start:()=>{resize();renderer.setAnimationLoop(frame)},stop:()=>{renderer.setAnimationLoop(null);ltags.forEach(([d])=>d.hidden=true)},recolor,focus,focusBox,setRoute,dolly,highlight,reset:()=>home(false)};
+}
+
+showDetail(null);
+</script>
+
+</html>
